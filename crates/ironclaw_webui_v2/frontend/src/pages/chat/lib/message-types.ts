@@ -50,6 +50,11 @@ export type ErrorChatMessage = {
   failureStatus?: string | null;
   failureCategory?: string | null;
   failureSummary?: string | null;
+  // User-dismissed: filter this bubble out of the rendered list, but keep it in
+  // state so a projection replay (SSE reconnect) hits the dedup update branch
+  // and preserves the flag instead of resurrecting the bubble. Set by the chat
+  // page's `dismissMessage` action; client-only state, never set by the server.
+  dismissed?: boolean;
   [key: string]: unknown;
 };
 
@@ -60,6 +65,7 @@ export type ErrorChatMessageInput = {
   failureStatus?: string | null;
   failureCategory?: string | null;
   failureSummary?: string | null;
+  dismissed?: boolean;
   [key: string]: unknown;
 };
 
