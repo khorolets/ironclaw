@@ -362,7 +362,15 @@ function insertPreservedAtOriginalPositions(fresh, preserved, current) {
   const append = [];
 
   for (const message of preserved) {
-    if (!isRunActivityMessage(message)) {
+    // Anchor run-activity rows AND a surviving optimistic user/assistant
+    // bubble to their original position relative to the fresh timeline.
+    // Previously only run-activity messages were anchored, so a still-
+    // unreconciled optimistic user message fell into `append` and rendered
+    // below later persisted rows — making an earlier message appear last
+    // (issue #16). Client-only error bubbles (err-*) still append at the end
+    // by design. The anchor-walk falls back to `append` when a message has no
+    // preceding anchored row.
+    if (!isRunActivityMessage(message) && !isSeededOptimisticMessage(message)) {
       append.push(message);
       continue;
     }
