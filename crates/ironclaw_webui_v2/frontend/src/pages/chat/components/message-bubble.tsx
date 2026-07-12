@@ -30,6 +30,7 @@ const ROLE_STYLES = {
 type MessageBubbleProps = {
   message: ChatMessage;
   onRetry?: (message: ChatMessage) => void;
+  onDismiss?: (messageId: string) => void;
   threadId?: string | null;
 };
 
@@ -72,7 +73,7 @@ function ThinkingDisclosure({ content }: { content?: string }) {
   );
 }
 
-function MessageBubbleImpl({ message, onRetry, threadId }: MessageBubbleProps) {
+function MessageBubbleImpl({ message, onRetry, onDismiss, threadId }: MessageBubbleProps) {
   const t = useT();
   const { role, content, images, attachments, generatedImages, isOptimistic, status, error, toolCalls, timestamp } = message;
   const isUser = role === CHAT_MESSAGE_ROLES.USER;
@@ -155,7 +156,11 @@ function MessageBubbleImpl({ message, onRetry, threadId }: MessageBubbleProps) {
   const contentWidthClass =
     isUser || isError ? "min-w-0 max-w-full" : "w-full min-w-0 max-w-full";
   const showRetryAction = status === "error" && onRetry;
-  const showMetaRow = showActions || showRetryAction || timeLabel;
+  // Client-only error bubbles (run failures, connection lost) are never in the
+  // durable timeline and get re-appended at the bottom on every refresh, so a
+  // stale error lingers indefinitely. Let the user dismiss it (issue #16).
+  const showDismissAction = isError && Boolean(onDismiss);
+  const showMetaRow = showActions || showRetryAction || showDismissAction || timeLabel;
   const roleStyle =
     ROLE_STYLES[role as keyof typeof ROLE_STYLES] ||
     ROLE_STYLES[CHAT_MESSAGE_ROLES.ASSISTANT];
@@ -229,8 +234,19 @@ function MessageBubbleImpl({ message, onRetry, threadId }: MessageBubbleProps) {
           ].join(" ")}
         >
           {timeLabel && (<time dateTime={timestamp} className="shrink-0 font-mono text-[11px] text-iron-500">{timeLabel}</time>)}
-          {(showActions || showRetryAction) && (
+          {(showActions || showRetryAction || showDismissAction) && (
             <div className="flex shrink-0 items-center gap-1">
+            {showDismissAction && (
+              <button
+                type="button"
+                onClick={() => onDismiss?.(message.id)}
+                title={t("common.dismiss")}
+                aria-label={t("common.dismiss")}
+                className="v2-button inline-grid h-7 w-7 place-items-center rounded-md border-0 bg-transparent p-0 text-iron-400 hover:text-iron-100"
+              >
+                <Icon name="close" className="h-3.5 w-3.5" />
+              </button>
+            )}
             {showActions && (
               <button
                 type="button"
