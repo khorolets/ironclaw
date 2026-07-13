@@ -139,3 +139,10 @@ export function isRunFailureMessageId(value: unknown): boolean {
     !id.startsWith(STREAM_FAILURE_ID_PREFIX)
   );
 }
+
+// Rendered chat messages minus the ones the user has dismissed. Shared by the
+// chat page's render filter and its regression test so the two cannot drift —
+// see `ErrorChatMessage.dismissed`.
+export function filterVisibleMessages(messages: ChatMessage[]): ChatMessage[] {
+  return (messages || []).filter((message) => !message?.dismissed);
+}

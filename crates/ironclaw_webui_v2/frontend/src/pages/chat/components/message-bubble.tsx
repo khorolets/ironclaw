@@ -163,6 +163,7 @@ function MessageBubbleImpl({ message, onRetry, onDismiss, threadId }: MessageBub
   // was too hard to find.
   const showDismissAction = isError && Boolean(onDismiss);
   const showMetaRow = showActions || showRetryAction || timeLabel;
+  const contentOpacityClass = isOptimistic ? "opacity-70" : "";
   const roleStyle =
     ROLE_STYLES[role as keyof typeof ROLE_STYLES] ||
     ROLE_STYLES[CHAT_MESSAGE_ROLES.ASSISTANT];
@@ -179,13 +180,12 @@ function MessageBubbleImpl({ message, onRetry, onDismiss, threadId }: MessageBub
             "text-base leading-7",
             contentWidthClass,
             roleStyle,
-            isOptimistic ? "opacity-70" : "",
           ].join(" ")}
         >
           {role === CHAT_MESSAGE_ROLES.ERROR
             ? (
               <div className="flex items-start gap-2">
-                <div className="min-w-0 flex-1"><MarkdownRenderer content={content} /></div>
+                <div className={["min-w-0 flex-1", contentOpacityClass].join(" ")}><MarkdownRenderer content={content} /></div>
                 {showDismissAction && (
                   <button
                     type="button"
@@ -201,11 +201,11 @@ function MessageBubbleImpl({ message, onRetry, onDismiss, threadId }: MessageBub
             )
             : role === CHAT_MESSAGE_ROLES.ASSISTANT ||
               role === CHAT_MESSAGE_ROLES.SYSTEM
-            ? (<MarkdownRenderer content={content} />)
-            : (<div className="v2-wrap-anywhere whitespace-pre-wrap break-words">{content}</div>)}
+            ? (<div className={contentOpacityClass}><MarkdownRenderer content={content} /></div>)
+            : (<div className="v2-wrap-anywhere whitespace-pre-wrap break-words"><span className={contentOpacityClass}>{content}</span></div>)}
 
           {status === "error" && (
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-red-300">
+            <div className={["mt-2 flex flex-wrap items-center gap-2 text-xs text-red-300", contentOpacityClass].join(" ")}>
               <span>{error}</span>
             </div>
           )}

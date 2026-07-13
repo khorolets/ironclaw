@@ -30,6 +30,7 @@ import {
   CHAT_MESSAGE_ROLES,
   createErrorChatMessage,
   createRequestFailureChatMessage,
+  filterVisibleMessages,
   isRequestFailureForMessage,
   requestFailureIdForMessage,
 } from "./message-types";
@@ -6247,13 +6248,10 @@ test("useChat.dismissMessage: flags the bubble dismissed and drops it from the r
   const userBubble = renderedMessages.find((message) => message.id === "msg-user-1");
   assert.ok(userBubble);
   assert.equal(userBubble.dismissed, undefined);
-  // The chat page's `visibleMessages` filter (chat.tsx:102) drops the
-  // dismissed row but keeps the rest. Apply the same filter here so a
-  // regression in the chat.tsx predicate or in the action's argument
-  // wiring is caught.
-  const visibleMessages = renderedMessages.filter(
-    (message) => !message?.dismissed,
-  );
+  // Drive the SAME predicate the chat page renders through
+  // (`filterVisibleMessages`, shared from message-types), so a regression in
+  // that filter — not just a copy of it — is caught here.
+  const visibleMessages = filterVisibleMessages(renderedMessages);
   assert.deepEqual(
     visibleMessages.map((message) => message.id),
     ["msg-user-1"],
