@@ -22,6 +22,7 @@ import { TypingIndicator } from "./components/typing-indicator";
 import { useChat } from "./hooks/useChat";
 import { channelConnectionDisplayName } from "../../lib/channel-connection-events";
 import { NEW_DRAFT_KEY } from "./lib/draft-store";
+import { filterVisibleMessages } from "./lib/message-types";
 import { buildRuntimeContext } from "./lib/runtime-context";
 import { buildScopedLogsPath } from "../logs/lib/logs-data";
 import { useInterfacePreferences } from "../../lib/interface-preferences";
@@ -93,7 +94,16 @@ export function Chat({
     submitChannelConnectionPairing,
     startOnboardingOAuth,
     dismissOnboardingPairing,
+    dismissMessage,
   } = useChat(activeThreadId);
+
+  // Hide error bubbles the user has dismissed; state keeps them (flagged) so a
+  // projection replay can't resurrect them (issue #16). Shared predicate so the
+  // regression test guards this exact filter.
+  const visibleMessages = React.useMemo(
+    () => filterVisibleMessages(messages),
+    [messages],
+  );
 
   const activeThread = React.useMemo(
     () => threads.find((thread) => thread.id === activeThreadId) || null,
@@ -329,11 +339,12 @@ export function Chat({
         (
           <>
           <MessageList
-            messages={messages}
+            messages={visibleMessages}
             isLoading={historyLoading}
             hasMore={hasMore}
             onLoadMore={loadMore}
             onRetryMessage={retryMessage}
+            onDismissMessage={dismissMessage}
             threadId={activeThreadId}
             logsPath={logsPath}
             pending={activeThreadIsProcessing}
