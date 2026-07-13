@@ -158,9 +158,11 @@ function MessageBubbleImpl({ message, onRetry, onDismiss, threadId }: MessageBub
   const showRetryAction = status === "error" && onRetry;
   // Client-only error bubbles (run failures, connection lost) are never in the
   // durable timeline and get re-appended at the bottom on every refresh, so a
-  // stale error lingers indefinitely. Let the user dismiss it (issue #16).
+  // stale error lingers indefinitely. Render a persistent dismiss (x) in the
+  // bubble's top-right corner (issue #16) — not the hover-only meta row, which
+  // was too hard to find.
   const showDismissAction = isError && Boolean(onDismiss);
-  const showMetaRow = showActions || showRetryAction || showDismissAction || timeLabel;
+  const showMetaRow = showActions || showRetryAction || timeLabel;
   const roleStyle =
     ROLE_STYLES[role as keyof typeof ROLE_STYLES] ||
     ROLE_STYLES[CHAT_MESSAGE_ROLES.ASSISTANT];
@@ -180,9 +182,25 @@ function MessageBubbleImpl({ message, onRetry, onDismiss, threadId }: MessageBub
             isOptimistic ? "opacity-70" : "",
           ].join(" ")}
         >
-          {role === CHAT_MESSAGE_ROLES.ASSISTANT ||
-          role === CHAT_MESSAGE_ROLES.SYSTEM ||
-          role === CHAT_MESSAGE_ROLES.ERROR
+          {role === CHAT_MESSAGE_ROLES.ERROR
+            ? (
+              <div className="flex items-start gap-2">
+                <div className="min-w-0 flex-1"><MarkdownRenderer content={content} /></div>
+                {showDismissAction && (
+                  <button
+                    type="button"
+                    onClick={() => onDismiss?.(message.id)}
+                    title={t("common.dismiss")}
+                    aria-label={t("common.dismiss")}
+                    className="v2-button -mr-1 -mt-0.5 inline-grid h-6 w-6 shrink-0 place-items-center rounded-md border-0 bg-transparent p-0 text-red-300/70 hover:bg-red-500/20 hover:text-red-100"
+                  >
+                    <Icon name="close" className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            )
+            : role === CHAT_MESSAGE_ROLES.ASSISTANT ||
+              role === CHAT_MESSAGE_ROLES.SYSTEM
             ? (<MarkdownRenderer content={content} />)
             : (<div className="v2-wrap-anywhere whitespace-pre-wrap break-words">{content}</div>)}
 
@@ -234,19 +252,8 @@ function MessageBubbleImpl({ message, onRetry, onDismiss, threadId }: MessageBub
           ].join(" ")}
         >
           {timeLabel && (<time dateTime={timestamp} className="shrink-0 font-mono text-[11px] text-iron-500">{timeLabel}</time>)}
-          {(showActions || showRetryAction || showDismissAction) && (
+          {(showActions || showRetryAction) && (
             <div className="flex shrink-0 items-center gap-1">
-            {showDismissAction && (
-              <button
-                type="button"
-                onClick={() => onDismiss?.(message.id)}
-                title={t("common.dismiss")}
-                aria-label={t("common.dismiss")}
-                className="v2-button inline-grid h-7 w-7 place-items-center rounded-md border-0 bg-transparent p-0 text-iron-400 hover:text-iron-100"
-              >
-                <Icon name="close" className="h-3.5 w-3.5" />
-              </button>
-            )}
             {showActions && (
               <button
                 type="button"
